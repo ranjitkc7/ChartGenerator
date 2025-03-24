@@ -4,12 +4,15 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import Svg, { Rect, Text as SvgText } from "react-native-svg";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import "../../global.css";
+import { db } from "../../firebaseConfig";
+import { addDoc, collection } from "firebase/firestore";
 
 const HomePage = () => {
   const [title, setTitle] = useState("");
@@ -34,7 +37,7 @@ const HomePage = () => {
     setRows([...rows, { facts: "", definition: "" }]);
   };
 
-  const generateChart = () => {
+  const generateChart = async () => {
     const data = rows
       .filter((row) => row.facts && row.definition)
       .map((row) => ({
@@ -42,6 +45,19 @@ const HomePage = () => {
         value: parseFloat(row.definition),
       }));
     setChartData(data);
+
+    try {
+      const docRef = await addDoc(collection(db, "charts"), {
+        title: title || "New Chart",
+        data: data,
+        timestamp: new Date().toISOString(),
+      });
+      console.log("Document written with ID: ", docRef.id);
+      Alert.alert("Success!","Chart data saved created successfully!");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Failed ", "Failed to save chart data.");
+    }
   };
 
   const chartWidth = 300;
@@ -59,11 +75,12 @@ const HomePage = () => {
             value={title}
             onChangeText={setTitle}
           />
-          <TouchableOpacity  style={{ position: "absolute", right: 0, 
-           height: 45, width: 45, justifyContent: "center", 
-           alignItems: "center", backgroundColor: "#ef4444", borderRadius: 50
+          <TouchableOpacity style={{
+            position: "absolute", right: 0,
+            height: 45, width: 45, justifyContent: "center",
+            alignItems: "center", backgroundColor: "#ef4444", borderRadius: 50
           }}
-           onPress = {() => router.back()}
+            onPress={() => router.back()}
           >
             <AntDesign name="logout" size={24} color="white" />
           </TouchableOpacity>
